@@ -1,0 +1,25 @@
+{
+    "manifest_version": 3,
+    "name": "flow-Assistant",
+    "version": "1.0",
+    "description": "A Chrome Extension side panel bot for automating interactions on labs.google/fx/tools/flow",
+    "permissions": [
+        "sidePanel",
+        "activeTab",
+        "scripting",
+        "storage",
+        "unlimitedStorage"
+    ],
+    "host_permissions": [
+        "https://labs.google/*"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_title": "Open flow-Assistant"
+    },
+    "side_panel": {
+        "default_path": "sidepanel.html"
+    }
+}
