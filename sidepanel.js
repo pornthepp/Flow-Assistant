@@ -267,6 +267,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusDiv.style.display = 'block';
     }
 
+    // Initialize UI Icons
+    function initializeIcons() {
+        if (typeof Icons === 'undefined') return;
+
+        const iconMappings = {
+            'icon-product': Icons.product,
+            'icon-add-product': Icons.add,
+            'icon-sparkles': Icons.sparkles,
+            'icon-subject': Icons.subject,
+            'icon-add-face': Icons.add,
+            'icon-add-clothes': Icons.add,
+            'icon-add-location': Icons.add,
+            'icon-camera': Icons.camera,
+            'icon-preview': Icons.preview,
+            'icon-generate': Icons.generate
+        };
+
+        for (const [id, svg] of Object.entries(iconMappings)) {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = svg;
+        }
+    }
+
+    initializeIcons();
+
     // Load & render saved image slots on startup for all categories
     const categories = ['product', 'face', 'clothes', 'location'];
     for (const cat of categories) {

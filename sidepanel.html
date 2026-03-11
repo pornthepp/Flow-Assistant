@@ -420,12 +420,7 @@
     <div id="productSection" class="section" style="display: none; padding-top: 12px;">
         <div class="input-group group-prod">
             <h2 class="section-title">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
-                    stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                </svg>
+                <span id="icon-product"></span>
                 สินค้า (Product)
             </h2>
 
@@ -434,11 +429,7 @@
 
             <!-- Add slot button -->
             <button id="addProductSlotBtn" class="add-slot-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
+                <span id="icon-add-product"></span>
                 เพิ่มรูปสินค้า
             </button>
 
@@ -480,12 +471,7 @@
                         </label>
                         <button id="btnAiGenText" class="glass-btn"
                             style="padding: 2px 6px; font-size: 0.7rem; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; display:flex; align-items:center; gap: 4px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24"
-                                fill="currentColor">
-                                <path
-                                    d="M11.64 0c-.51 5.95-5.32 10.74-11.23 11.21v1.54c5.91.47 10.72 5.25 11.23 11.2h1.55c.5-5.94 5.29-10.72 11.2-11.2v-1.54c-5.91-.47-10.7-5.26-11.2-11.21h-1.55z" />
-                            </svg>
-
+                            <span id="icon-sparkles"></span>
                         </button>
                     </div>
                     <textarea id="inputTextGraphic" placeholder="เช่น SUMMER SALE 50%, NEW ARRIVAL..."
@@ -510,12 +496,7 @@
     <div class="main-area">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
             <h2 class="section-title" style="margin-bottom: 0;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="#f472b6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                    <polyline points="21 15 16 10 5 21"></polyline>
-                </svg>
+                <span id="icon-subject"></span>
                 นางแบบและองค์ประกอบ
             </h2>
             <!-- Toggle for Use Model (Visible only when Commercial is selected) -->
@@ -536,11 +517,7 @@
                     <!-- Face Slots Dynamic List -->
                     <div id="faceSlotList" class="slot-list"></div>
                     <button id="addFaceSlotBtn" class="add-slot-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19" />
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
+                        <span id="icon-add-face"></span>
                         เพิ่มรูปใบหน้า
                     </button>
                     <input type="text" id="inputSubject" value="หญิงสาวสวย" placeholder="เช่น ผู้หญิงเอเชียผมสั้น..."
@@ -564,11 +541,7 @@
                     <!-- Clothes Slots Dynamic List -->
                     <div id="clothesSlotList" class="slot-list"></div>
                     <button id="addClothesSlotBtn" class="add-slot-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19" />
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
+                        <span id="icon-add-clothes"></span>
                         เพิ่มรุปชุดแต่งกาย
                     </button>
                     <input type="text" id="inputClothes" placeholder="เช่น ชุดสูทสีดำ, เสื้อยืดสีขาว..."
@@ -622,11 +595,7 @@
                     <!-- Location Slots Dynamic List -->
                     <div id="locationSlotList" class="slot-list"></div>
                     <button id="addLocationSlotBtn" class="add-slot-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="12" y1="5" x2="12" y2="19" />
-                            <line x1="5" y1="12" x2="19" y2="12" />
-                        </svg>
+                        <span id="icon-add-location"></span>
                         เพิ่มรูปสถานที่
                     </button>
                     <input type="text" id="inputLocation" placeholder="เช่น คาเฟ่สไตล์มินิมอล, ริมทะเลยามเย็น..."
@@ -641,13 +610,7 @@
     <div class="section">
         <div class="input-group group-camera">
             <h2 class="section-title">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path
-                        d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z">
-                    </path>
-                    <circle cx="12" cy="13" r="3"></circle>
-                </svg>
+                <span id="icon-camera"></span>
                 มุมกล้อง (Camera Settings)
             </h2>
             <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -730,19 +693,11 @@
         </div>
         <div style="display: flex; gap: 8px;">
             <button id="previewBtn" class="primary-btn" style="background-color: #4b5563; flex: 1; padding: 10px 8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"></path>
-                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                </svg>
+                <span id="icon-preview"></span>
                 ดูตัวอย่าง (Preview)
             </button>
             <button id="runBotBtn" class="primary-btn" style="flex: 1.5; padding: 10px 8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M5 12h14"></path>
-                    <path d="m12 5 7 7-7 7"></path>
-                </svg>
+                <span id="icon-generate"></span>
                 ส่งคำสั่ง (Generate)
             </button>
         </div>
@@ -751,6 +706,8 @@
     <!-- Hidden file input for image uploads -->
     <input type="file" id="hiddenFileInput" accept="image/*" style="display:none">
 
+    <!-- Icons and Scripts -->
+    <script src="icons.js"></script>
     <script src="prompts.js"></script>
     <script src="sidepanel.js"></script>
 </body>
