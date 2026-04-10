@@ -641,18 +641,26 @@ Respond WITH ONLY THE PHRASE ITSELF. DO NOT include quotation marks, explanation
 
                 updateStatus(`[Batch ${i}/${batchCount}] กำลังรันสคริปต์อัตโนมัติ...`, 'info');
 
+                const storageData = await chrome.storage.local.get(['customSelectors']);
+                const customSel = storageData.customSelectors || {};
+
                 const results = await chrome.scripting.executeScript({
                     target: { tabId: tab.id },
                     func: runAutomationInPage,
-                    args: [promptObj, imagesToPaste]
+                    args: [promptObj, imagesToPaste, customSel]
                 });
 
                 if (results && results[0]) {
-                    const { success, message, details } = results[0].result;
+                    const resultData = results[0].result;
+                    if (!resultData) {
+                        updateStatus(`ℹ️ [Batch ${i}/${batchCount}] เกิดปัญหาขัดข้อง: หน้าเว็บอาจมีการรีเฟรช โหลดซ้ำ หรือ Script ถูกขัดจังหวะกลางคัน`, 'error');
+                        break;
+                    }
+                    const { success, message, details } = resultData;
                     if (success) {
                         updateStatus(`✅ [Batch ${i}/${batchCount}] ${message}\n\n${details || ''}`, 'success');
                     } else {
-                        updateStatus(`ℹ️ [Batch ${i}/${batchCount}] ${message}\n\n${details}`, 'info');
+                        updateStatus(`ℹ️ [Batch ${i}/${batchCount}] ${message}\n\n${details || ''}`, 'info');
                         break; // Stop batch on failure
                     }
                 }
@@ -683,6 +691,182 @@ Respond WITH ONLY THE PHRASE ITSELF. DO NOT include quotation marks, explanation
             isBatchRunning = false;
             if (btnStopBatch) btnStopBatch.style.display = 'none';
         }
+    });
+
+    // ==========================================
+    // SETTINGS LOGIC
+    // ==========================================
+    const settingsModal = document.getElementById('settingsModal');
+    const btnOpenSettings = document.getElementById('btnOpenSettings');
+    const btnCloseSettings = document.getElementById('btnCloseSettings');
+    const btnSaveSettings = document.getElementById('btnSaveSettings');
+    const btnResetSelectors = document.getElementById('btnResetSelectors');
+    
+    const chkBorder = document.getElementById('settingEnableBorder');
+    const colorBorder = document.getElementById('settingBorderColor');
+    const opacityBorder = document.getElementById('settingBorderOpacity');
+    
+    const selPromptBox = document.getElementById('selectorPromptBox');
+    const selAddImgBtn = document.getElementById('selectorAddImgBtn');
+    const selGenerateBtn = document.getElementById('selectorGenerateBtn');
+    const selImageInChat = document.getElementById('selectorImageInChat');
+
+    const DEFAULT_SELECTORS = {
+        promptBox: '[data-slate-editor="true"][contenteditable="true"]',
+        addImgBtn: 'div.sc-21faa80e-2 > button',
+        generateBtn: '',
+        imageInChat: 'img[alt="สื่อที่คุณสร้างหรืออัปโหลดไว้ ซึ่งอยู่ในคอลเล็กชัน"]'
+    };
+
+    const loadSettings = async () => {
+        const data = await chrome.storage.local.get(['borderOptions', 'customSelectors']);
+        const border = data.borderOptions || { enabled: false, color: '#f59e0b', opacity: 0.5 };
+        const sel = data.customSelectors || {};
+
+        if(chkBorder) chkBorder.checked = border.enabled;
+        if(colorBorder) colorBorder.value = border.color;
+        if(opacityBorder) opacityBorder.value = border.opacity;
+
+        if(selPromptBox) selPromptBox.value = sel.promptBox || DEFAULT_SELECTORS.promptBox;
+        if(selAddImgBtn) selAddImgBtn.value = sel.addImgBtn || DEFAULT_SELECTORS.addImgBtn;
+        if(selGenerateBtn) selGenerateBtn.value = sel.generateBtn || DEFAULT_SELECTORS.generateBtn;
+        if(selImageInChat) selImageInChat.value = sel.imageInChat || DEFAULT_SELECTORS.imageInChat;
+    };
+
+    loadSettings();
+
+    if(btnOpenSettings) btnOpenSettings.addEventListener('click', () => settingsModal.style.display = 'flex');
+    if(btnCloseSettings) btnCloseSettings.addEventListener('click', () => settingsModal.style.display = 'none');
+
+    const applyBorderToTab = async () => {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab && (tab.url.includes('labs.google') || tab.url.includes('google.com'))) {
+            const borderPayload = {
+                enabled: chkBorder.checked,
+                color: colorBorder.value,
+                opacity: opacityBorder.value
+            };
+            try {
+                await chrome.tabs.sendMessage(tab.id, {
+                    action: 'TOGGLE_BORDER',
+                    payload: borderPayload
+                });
+            } catch (err) {
+                try {
+                    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
+                    await chrome.tabs.sendMessage(tab.id, {
+                        action: 'TOGGLE_BORDER',
+                        payload: borderPayload
+                    });
+                } catch (e) {}
+            }
+        }
+    };
+
+    let borderTimeout;
+    const triggerBorderUpdate = () => {
+        clearTimeout(borderTimeout);
+        borderTimeout = setTimeout(applyBorderToTab, 300);
+    };
+
+    if(chkBorder) chkBorder.addEventListener('change', triggerBorderUpdate);
+    if(colorBorder) colorBorder.addEventListener('input', triggerBorderUpdate);
+    if(opacityBorder) opacityBorder.addEventListener('input', triggerBorderUpdate);
+
+    if(btnSaveSettings) btnSaveSettings.addEventListener('click', async () => {
+        const borderOptions = {
+            enabled: chkBorder.checked,
+            color: colorBorder.value,
+            opacity: opacityBorder.value
+        };
+        const customSelectors = {
+            promptBox: selPromptBox.value.trim(),
+            addImgBtn: selAddImgBtn.value.trim(),
+            generateBtn: selGenerateBtn.value.trim(),
+            imageInChat: selImageInChat.value.trim()
+        };
+        await chrome.storage.local.set({ borderOptions, customSelectors });
+        applyBorderToTab();
+        settingsModal.style.display = 'none';
+        updateStatus('✅ บันทึกการตั้งค่าเรียบร้อยแล้ว', 'success');
+    });
+
+    if(btnResetSelectors) btnResetSelectors.addEventListener('click', () => {
+        selPromptBox.value = DEFAULT_SELECTORS.promptBox;
+        selAddImgBtn.value = DEFAULT_SELECTORS.addImgBtn;
+        selGenerateBtn.value = DEFAULT_SELECTORS.generateBtn;
+        selImageInChat.value = DEFAULT_SELECTORS.imageInChat;
+    });
+
+    document.querySelectorAll('.btn-pick').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const targetId = btn.getAttribute('data-target');
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            
+            if (!tab || (!tab.url.includes('labs.google') && !tab.url.includes('google.com'))) {
+                updateStatus('❌ กรุณาเปิดหน้าเว็บกูเกิลก่อนใช้ตัวเลือกนี้', 'error');
+                settingsModal.style.display = 'none';
+                return;
+            }
+
+            settingsModal.style.display = 'none';
+            
+            try {
+                let response;
+                try {
+                    response = await chrome.tabs.sendMessage(tab.id, { action: 'START_PICKING' });
+                } catch (err) {
+                    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
+                    response = await chrome.tabs.sendMessage(tab.id, { action: 'START_PICKING' });
+                }
+
+                if (response && response.success && response.selector) {
+                    document.getElementById(targetId).value = response.selector;
+                    settingsModal.style.display = 'flex';
+                } else if (response && response.selector === null) {
+                    settingsModal.style.display = 'flex';
+                }
+            } catch (err) {
+                updateStatus('❌ ไม่สามารถจับ Element ได้ กรุณารีเฟรชหน้าเว็บ', 'error');
+                settingsModal.style.display = 'flex';
+            }
+        });
+    });
+
+    document.querySelectorAll('.btn-test').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const targetId = btn.getAttribute('data-target');
+            const selector = document.getElementById(targetId).value;
+            if (!selector) {
+                updateStatus('❌ ยังไม่มี Selector สำหรับทดสอบ', 'error');
+                return;
+            }
+
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            
+            if (!tab || (!tab.url.includes('labs.google') && !tab.url.includes('google.com'))) {
+                updateStatus('❌ กรุณาเปิดหน้าเว็บกูเกิลก่อนใช้ตัวเลือกนี้', 'error');
+                return;
+            }
+            
+            try {
+                let response;
+                try {
+                    response = await chrome.tabs.sendMessage(tab.id, { action: 'TEST_SELECTOR', selector });
+                } catch (err) {
+                    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
+                    response = await chrome.tabs.sendMessage(tab.id, { action: 'TEST_SELECTOR', selector });
+                }
+
+                if (response && response.success) {
+                    updateStatus('✅ พบ Element และทำการทดสอบคลิกแล้ว', 'success');
+                } else {
+                    updateStatus(`❌ ไม่พบ Element: ${selector}`, 'error');
+                }
+            } catch (err) {
+                updateStatus('❌ เชื่อมต่อหน้าเว็บไม่ได้ กรุณารีเฟรช', 'error');
+            }
+        });
     });
 });
 
@@ -715,11 +899,16 @@ async function waitForGenerationToFinish() {
 // ==========================================
 // THIS FUNCTION RUNS INSIDE THE WEB PAGE Context (Slate.js keyboard simulation)
 // ==========================================
-async function runAutomationInPage(promptObj, imagesToPaste = []) {
+async function runAutomationInPage(promptObj, imagesToPaste = [], customSelectors = {}) {
     let logMessages = [];
     const log = (msg) => {
         logMessages.push(msg);
     };
+
+    const selPromptBox = customSelectors.promptBox || '[data-slate-editor="true"][contenteditable="true"]';
+    const selAddImgBtn = customSelectors.addImgBtn || 'div.sc-21faa80e-2 > button';
+    const selGenerateBtn = customSelectors.generateBtn || '';
+    const selImageInChat = customSelectors.imageInChat || 'img[alt="สื่อที่คุณสร้างหรืออัปโหลดไว้ ซึ่งอยู่ในคอลเล็กชัน"]';
 
     const basePrompt = promptObj.basePrompt || '';
     const promptSuffix = promptObj.promptSuffix || '';
@@ -730,42 +919,38 @@ async function runAutomationInPage(promptObj, imagesToPaste = []) {
     }
 
     // นับรูปที่มีอยู่บนหน้าจอก่อนจะเริ่มอัปโหลด (รวม history) เพื่อหาค่า Baseline
-    const initialImagesCount = document.querySelectorAll('img[alt="สื่อที่คุณสร้างหรืออัปโหลดไว้ ซึ่งอยู่ในคอลเล็กชัน"]').length;
+    const initialImagesCount = document.querySelectorAll(selImageInChat).length;
 
-    // --- Helper: จำลองการกดแป้นพิมพ์ 1 ตัวอักษร แบบที่ Slate.js รับรู้ได้ ---
-    function simulateKey(element, char) {
-        const keyCode = char.charCodeAt(0);
-
-        element.dispatchEvent(new KeyboardEvent('keydown', {
-            key: char, code: `Key${char.toUpperCase()}`,
-            keyCode, which: keyCode,
-            bubbles: true, cancelable: true, composed: true
-        }));
-
-        element.dispatchEvent(new InputEvent('beforeinput', {
-            inputType: 'insertText',
-            data: char,
-            bubbles: true, cancelable: true, composed: true
-        }));
-
-        element.dispatchEvent(new InputEvent('input', {
-            inputType: 'insertText',
-            data: char,
-            bubbles: true, cancelable: true, composed: true
-        }));
-
-        element.dispatchEvent(new KeyboardEvent('keyup', {
-            key: char, code: `Key${char.toUpperCase()}`,
-            keyCode, which: keyCode,
-            bubbles: true, cancelable: true, composed: true
-        }));
-    }
-
-    async function typeText(element, text, delayMs = 30) {
-        for (const char of text) {
-            simulateKey(element, char);
-            await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
+    // --- Helper: แทรกข้อความด้วย Select All + Insert/Paste (กันหน้าเว็บ Redirect ตอนช่องว่าง) ---
+    async function typeTextRobust(element, text) {
+        element.focus();
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // 1. จำลองการครอบดำข้อความทั้งหมด
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // 2. พิมพ์ทับลงไปตรงๆ ด้วยคำสั่งระบบ
+        const success = document.execCommand('insertText', false, text);
+        
+        // 3. ยิง Event Paste สำรองให้ Slate.js (บางเว็บบล็อก execCommand)
+        const dataTransfer = new DataTransfer();
+        dataTransfer.setData('text/plain', text);
+        const pasteEvent = new ClipboardEvent('paste', {
+            clipboardData: dataTransfer,
+            bubbles: true,
+            cancelable: true,
+            composed: true
+        });
+        element.dispatchEvent(pasteEvent);
+        
+        // 4. กระตุ้น Input ให้ React รู้จัก
+        element.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+        await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     // Helper: Convert base64 data URL to a File object
@@ -782,10 +967,10 @@ async function runAutomationInPage(promptObj, imagesToPaste = []) {
     }
 
     try {
-        const inputBox = document.querySelector('[data-slate-editor="true"][contenteditable="true"]');
+        const inputBox = document.querySelector(selPromptBox);
 
         if (!inputBox) {
-            return { success: false, message: 'หาช่องพิมพ์ข้อความ (Prompt Box) ไม่เจอครับ', details: logMessages.join('\n') };
+            return { success: false, message: '❌ หาช่องพิมพ์ข้อความ (Prompt Box) ไม่เจอครับ\n💡 กรุณาไปที่เมนู "⚙️ ตั้งค่า" และใช้ปุ่ม 🎯 Pick เพื่อชี้เป้าช่องพิมพ์ข้อความใหม่หน้าเว็บ', details: logMessages.join('\n') };
         }
 
         log('เจอช่องพิมพ์ข้อความแล้ว กำลังล้างของเดิมและเริ่มพิมพ์ใหม่...');
@@ -804,7 +989,8 @@ async function runAutomationInPage(promptObj, imagesToPaste = []) {
 
                 // ขั้นตอน 1: กดปุ่ม + เพื่อเปิดคลังรูปภาพ (กดทุกครั้งสำหรับทุกภาพ)
                 log('  ขั้นตอน 1: กดปุ่ม + เพื่อเปิดคลังรูปภาพ...');
-                let addBtn = document.querySelector('div.sc-21faa80e-2 > button');
+                let addBtn = selAddImgBtn ? document.querySelector(selAddImgBtn) : null;
+                if (!addBtn) addBtn = document.querySelector('div.sc-21faa80e-2 > button');
                 if (!addBtn) addBtn = document.querySelector('button span')?.closest('button');
 
                 if (addBtn) {
@@ -901,7 +1087,7 @@ async function runAutomationInPage(promptObj, imagesToPaste = []) {
                 await new Promise(resolve => setTimeout(resolve, 500));
 
                 // นับจำนวนภาพใหม่ที่เพิ่มเข้ามา หักลบจากรูปใน history
-                const currentImagesCount = document.querySelectorAll('img[alt="สื่อที่คุณสร้างหรืออัปโหลดไว้ ซึ่งอยู่ในคอลเล็กชัน"]').length;
+                const currentImagesCount = document.querySelectorAll(selImageInChat).length;
                 const newAddedImages = currentImagesCount - initialImagesCount;
 
                 if (newAddedImages >= imagesToPaste.length) {
@@ -922,40 +1108,47 @@ async function runAutomationInPage(promptObj, imagesToPaste = []) {
         inputBox.focus();
         await new Promise(resolve => setTimeout(resolve, 200));
 
-        // ล้างข้อความเดิม
-        inputBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'a', ctrlKey: true, bubbles: true, cancelable: true, composed: true }));
-        await new Promise(resolve => setTimeout(resolve, 100));
-        inputBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', code: 'Delete', bubbles: true, cancelable: true, composed: true }));
-        inputBox.dispatchEvent(new InputEvent('beforeinput', { inputType: 'deleteContentBackward', bubbles: true, cancelable: true, composed: true }));
-        inputBox.dispatchEvent(new InputEvent('input', { inputType: 'deleteContentBackward', bubbles: true, cancelable: true, composed: true }));
-        await new Promise(resolve => setTimeout(resolve, 300));
-
         const fullPrompt = basePrompt + (promptSuffix ? '\n' + promptSuffix : '');
 
         if (fullPrompt.trim() !== '') {
-            log(`กำลังพิมพ์ข้อความทั้งหมดด้วยระบบจำลองการพิมพ์: "${fullPrompt}" ...`);
-            await typeText(inputBox, fullPrompt, 5);
+            log(`กำลังคลุมดำและวางข้อความทั้งหมด: "${fullPrompt}" ...`);
+            await typeTextRobust(inputBox, fullPrompt);
             log('พิมพ์ข้อความเสร็จแล้ว!');
+        } else {
+            // ถ้าคำสั่งว่างเปล่าจริงๆ ค่อยคลุมดำแล้วลบทิ้ง
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(inputBox);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            document.execCommand('delete', false, null);
+            await new Promise(resolve => setTimeout(resolve, 300));
         }
 
         await new Promise(resolve => setTimeout(resolve, 800));
 
-        // หาปุ่ม Generate
         let generateBtn = null;
+        
+        if (selGenerateBtn) {
+            generateBtn = document.querySelector(selGenerateBtn);
+            if (generateBtn) log('ระบุปุ่มได้จากการตั้งค่า Manual Selector');
+        }
 
-        const icons = Array.from(document.querySelectorAll('i.google-symbols'));
-        const targetIcon = icons.find(icon => icon.textContent.trim() === 'arrow_forward');
+        if (!generateBtn) {
+            const icons = Array.from(document.querySelectorAll('i.google-symbols'));
+            const targetIcon = icons.find(icon => icon.textContent.trim() === 'arrow_forward');
 
-        if (targetIcon) {
-            generateBtn = targetIcon.closest('button');
-            log('ระบุปุ่มได้จากการมองหาไอคอน arrow_forward');
-        } else {
-            const allButtons = Array.from(document.querySelectorAll('button'));
-            generateBtn = allButtons.find(b => {
-                const text = b.textContent.trim();
-                return text === 'สร้าง' || text === 'Create' || text === 'Generate' || text.includes('สร้าง');
-            });
-            if (generateBtn) log('ระบุปุ่มด้วยการหาจากข้อความอักษร Fallback');
+            if (targetIcon) {
+                generateBtn = targetIcon.closest('button');
+                log('ระบุปุ่มได้จากการมองหาไอคอน arrow_forward');
+            } else {
+                const allButtons = Array.from(document.querySelectorAll('button'));
+                generateBtn = allButtons.find(b => {
+                    const text = b.textContent.trim();
+                    return text === 'สร้าง' || text === 'Create' || text === 'Generate' || text === 'สร้างสไตล์';
+                });
+                if (generateBtn) log('ระบุปุ่มด้วยการหาจากข้อความอักษร Fallback ห้ามคลุมเครือ');
+            }
         }
 
         if (generateBtn) {
@@ -971,7 +1164,7 @@ async function runAutomationInPage(promptObj, imagesToPaste = []) {
 
             return { success: true, message: `ทำการส่งคำสั่งสำเร็จ!` };
         } else {
-            return { success: false, message: 'หาปุ่ม Generate (กดส่งคำสั่ง) ไม่เจอครับ', details: logMessages.join('\n') };
+            return { success: false, message: '❌ หาปุ่มการสร้าง (Generate Button) ไม่เจอครับ\n💡 กรุณาไปที่เมนู "⚙️ ตั้งค่า" และใช้ปุ่ม 🎯 Pick เพื่อชี้เป้าปุ่มกดสร้าง', details: logMessages.join('\n') };
         }
 
     } catch (error) {

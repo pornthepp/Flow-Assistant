@@ -400,6 +400,10 @@
             <h1>Flow Assistant</h1>
             <p>Google Flow Assistant Chrome Extension</p>
         </div>
+        <!-- Settings Button -->
+        <button id="btnOpenSettings" class="slot-upload-btn" style="width: auto; padding: 4px 8px; gap: 4px;" title="ตั้งค่า (Settings)">
+            ⚙️ ตั้งค่า
+        </button>
     </div>
 
     <!-- ===== 1. Top Level Mode Selection ===== -->
@@ -705,6 +709,83 @@
 
     <!-- Hidden file input for image uploads -->
     <input type="file" id="hiddenFileInput" accept="image/*" style="display:none">
+
+    <!-- Settings Modal (Hidden by default) -->
+    <div id="settingsModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; padding: 20px; flex-direction: column; overflow-y: auto;">
+        <div style="background: #1f2937; border: 1px solid #374151; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 400px; margin: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #374151; padding-bottom: 8px;">
+                <h2 style="margin: 0; font-size: 1rem; color: #f3f4f6;">⚙️ ตั้งค่า (Settings)</h2>
+                <button id="btnCloseSettings" style="background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1.2rem;">✖</button>
+            </div>
+            
+            <!-- Element Border Setting -->
+            <div class="input-group" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.2); margin-bottom: 0;">
+                <h3 style="margin: 0 0 8px 0; font-size: 0.85rem; color: #fcd34d;">Element Border</h3>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.8rem; color: #f3f4f6;">
+                    <input type="checkbox" id="settingEnableBorder" style="accent-color: #f59e0b;">
+                    วาดกรอบ Element เสมอ
+                </label>
+                <div style="display: flex; gap: 12px; margin-top: 8px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
+                        <label style="font-size: 0.7rem; color: #9ca3af;">สีเส้นขอบ (Color)</label>
+                        <input type="color" id="settingBorderColor" value="#f59e0b" style="width: 100%; height: 30px; border: none; cursor: pointer; background: transparent;">
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
+                        <label style="font-size: 0.7rem; color: #9ca3af;">ความชัด (Opacity)</label>
+                        <input type="range" id="settingBorderOpacity" min="0.1" max="1" step="0.1" value="0.5" style="width: 100%;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Element Pick Setup -->
+            <div class="input-group" style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); margin-bottom: 0;">
+                <h3 style="margin: 0 0 8px 0; font-size: 0.85rem; color: #93c5fd;">ตั้งค่าปุ่ม (Element Pick Setup)</h3>
+                <p style="font-size: 0.7rem; color: #9ca3af; margin: 0 0 8px 0;">ระบบสำหรับชี้ปุ่มบนหน้าเว็บเพื่อใช้เป็นตัวอ้างอิง</p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Prompt Box -->
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label style="font-size: 0.75rem; color: #d1d5db;">ช่องพิมพ์ข้อความ (Prompt Box)</label>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="text" id="selectorPromptBox" class="glass-input" style="flex: 1; font-family: monospace; font-size: 0.75rem;">
+                            <button class="primary-btn btn-pick" data-target="selectorPromptBox" style="width: auto; padding: 4px 8px; font-size: 0.75rem; flex-shrink: 0;" title="จิ้มเลือกบนหน้าเว็บ">🎯 Pick</button>
+                            <button class="primary-btn btn-test" data-target="selectorPromptBox" style="width: auto; padding: 4px 8px; font-size: 0.75rem; flex-shrink: 0; background-color: #8b5cf6;" title="ทดสอบการทำงาน">🧪 Test</button>
+                        </div>
+                    </div>
+                    <!-- Add Image Button -->
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label style="font-size: 0.75rem; color: #d1d5db;">ปุ่มเพิ่มรูป (Add Image Button)</label>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="text" id="selectorAddImgBtn" class="glass-input" style="flex: 1; font-family: monospace; font-size: 0.75rem;">
+                            <button class="primary-btn btn-pick" data-target="selectorAddImgBtn" style="width: auto; padding: 4px 8px; font-size: 0.75rem; flex-shrink: 0;" title="จิ้มเลือกบนหน้าเว็บ">🎯 Pick</button>
+                            <button class="primary-btn btn-test" data-target="selectorAddImgBtn" style="width: auto; padding: 4px 8px; font-size: 0.75rem; flex-shrink: 0; background-color: #8b5cf6;" title="ทดสอบการทำงาน">🧪 Test</button>
+                        </div>
+                    </div>
+                    <!-- Generate Button -->
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label style="font-size: 0.75rem; color: #d1d5db;">ปุ่มสร้าง (Generate Button)</label>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="text" id="selectorGenerateBtn" class="glass-input" style="flex: 1; font-family: monospace; font-size: 0.75rem;">
+                            <button class="primary-btn btn-pick" data-target="selectorGenerateBtn" style="width: auto; padding: 4px 8px; font-size: 0.75rem; flex-shrink: 0;" title="จิ้มเลือกบนหน้าเว็บ">🎯 Pick</button>
+                            <button class="primary-btn btn-test" data-target="selectorGenerateBtn" style="width: auto; padding: 4px 8px; font-size: 0.75rem; flex-shrink: 0; background-color: #8b5cf6;" title="ทดสอบการทำงาน">🧪 Test</button>
+                        </div>
+                    </div>
+                    <!-- Image In Chat -->
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label style="font-size: 0.75rem; color: #d1d5db;">รูปในแชท (Uploaded Image)</label>
+                        <div style="display: flex; gap: 6px;">
+                            <input type="text" id="selectorImageInChat" class="glass-input" style="flex: 1; font-family: monospace; font-size: 0.75rem;">
+                            <button class="primary-btn btn-pick" data-target="selectorImageInChat" style="width: auto; padding: 4px 8px; font-size: 0.75rem; flex-shrink: 0;" title="จิ้มเลือกบนหน้าเว็บ">🎯 Pick</button>
+                            <button class="primary-btn btn-test" data-target="selectorImageInChat" style="width: auto; padding: 4px 8px; font-size: 0.75rem; flex-shrink: 0; background-color: #8b5cf6;" title="ทดสอบการทำงาน">🧪 Test</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; display: flex; justify-content: space-between;">
+                    <button id="btnResetSelectors" class="slot-delete-btn" style="width: auto; padding: 4px 8px;">🔄 ค่าเริ่มต้น</button>
+                    <button id="btnSaveSettings" class="primary-btn" style="width: auto; padding: 4px 16px; background: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);">💾 บันทึก</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Icons and Scripts -->
     <script src="icons.js"></script>
